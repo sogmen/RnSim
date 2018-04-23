@@ -40,6 +40,7 @@
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4VisAttributes.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -56,36 +57,31 @@ B1DetectorConstruction::~B1DetectorConstruction()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 G4VPhysicalVolume* B1DetectorConstruction::Construct()
-{  
+{
   // Get nist material manager
   G4NistManager* nist = G4NistManager::Instance();
-  
-  // Envelope parameters
-  //
-  G4double env_sizeXY = 20*cm, env_sizeZ = 30*cm;
-  G4Material* env_mat = nist->FindOrBuildMaterial("G4_WATER");
-   
+
   // Option to switch on/off checking of volumes overlaps
-  //
+
   G4bool checkOverlaps = true;
 
-  //     
+  //
   // World
   //
-  G4double world_sizeXY = 1.2*env_sizeXY;
-  G4double world_sizeZ  = 1.2*env_sizeZ;
+  G4double world_sizeXY = 2*m;
+  G4double world_sizeZ  = 2*m;
   G4Material* world_mat = nist->FindOrBuildMaterial("G4_AIR");
-  
-  G4Box* solidWorld =    
+
+  G4Box* solidWorld =
     new G4Box("World",                       //its name
        0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
-      
-  G4LogicalVolume* logicWorld =                         
+
+  G4LogicalVolume* logicWorld =
     new G4LogicalVolume(solidWorld,          //its solid
                         world_mat,           //its material
                         "World");            //its name
-                                   
-  G4VPhysicalVolume* physWorld = 
+
+  G4VPhysicalVolume* physWorld =
     new G4PVPlacement(0,                     //no rotation
                       G4ThreeVector(),       //at (0,0,0)
                       logicWorld,            //its logical volume
@@ -94,95 +90,78 @@ G4VPhysicalVolume* B1DetectorConstruction::Construct()
                       false,                 //no boolean operation
                       0,                     //copy number
                       checkOverlaps);        //overlaps checking
-                     
-  //     
-  // Envelope
-  //  
-  G4Box* solidEnv =    
-    new G4Box("Envelope",                    //its name
-        0.5*env_sizeXY, 0.5*env_sizeXY, 0.5*env_sizeZ); //its size
-      
-  G4LogicalVolume* logicEnv =                         
-    new G4LogicalVolume(solidEnv,            //its solid
-                        env_mat,             //its material
-                        "Envelope");         //its name
-               
+
+
+  // Steel Housing
+
+  G4Material* steelHousing_mat = nist->FindOrBuildMaterial("G4_A-150_TISSUE");
+  G4ThreeVector pos1 = G4ThreeVector(0, 2*cm, 2*cm);
+
+  // Conical section shape
+
+  G4double steelHousing_rmina =  0.*m, steelHousing_rmaxa = 1.5*m;
+  G4double steelHousing_rminb =  0.*m, steelHousing_rmaxb = 1.5*m;
+  G4double steelHousing_hz = 1.5*m;
+  G4double steelHousing_phimin = 0.*deg, steelHousing_phimax = 360.*deg;
+  G4Cons* solidsteelHousing =
+    new G4Cons("steelHousing",
+    steelHousing_rmina, steelHousing_rmaxa, steelHousing_rminb, steelHousing_rmaxb, steelHousing_hz,
+    steelHousing_phimin, steelHousing_phimax);
+
+  G4LogicalVolume* logicsteelHousing =
+    new G4LogicalVolume(solidsteelHousing,         //its solid
+                        steelHousing_mat,          //its material
+                        "steelHousing");           //its name
+
+G4VisAttributes visibility;
+visibility.SetForceWireframe(true);
+logicsteelHousing->SetVisAttributes(visibility);
+
+
   new G4PVPlacement(0,                       //no rotation
-                    G4ThreeVector(),         //at (0,0,0)
-                    logicEnv,                //its logical volume
-                    "Envelope",              //its name
+                    pos1,                    //at position
+                    logicsteelHousing,         //its logical volume
+                    "steelHousing",            //its name
                     logicWorld,              //its mother  volume
                     false,                   //no boolean operation
                     0,                       //copy number
                     checkOverlaps);          //overlaps checking
- 
-  //     
-  // Shape 1
-  //  
-  G4Material* shape1_mat = nist->FindOrBuildMaterial("G4_A-150_TISSUE");
-  G4ThreeVector pos1 = G4ThreeVector(0, 2*cm, -7*cm);
-        
-  // Conical section shape       
-  G4double shape1_rmina =  0.*cm, shape1_rmaxa = 2.*cm;
-  G4double shape1_rminb =  0.*cm, shape1_rmaxb = 4.*cm;
-  G4double shape1_hz = 3.*cm;
-  G4double shape1_phimin = 0.*deg, shape1_phimax = 360.*deg;
-  G4Cons* solidShape1 =    
-    new G4Cons("Shape1", 
-    shape1_rmina, shape1_rmaxa, shape1_rminb, shape1_rmaxb, shape1_hz,
-    shape1_phimin, shape1_phimax);
-                      
-  G4LogicalVolume* logicShape1 =                         
-    new G4LogicalVolume(solidShape1,         //its solid
-                        shape1_mat,          //its material
-                        "Shape1");           //its name
-               
-  new G4PVPlacement(0,                       //no rotation
-                    pos1,                    //at position
-                    logicShape1,             //its logical volume
-                    "Shape1",                //its name
-                    logicEnv,                //its mother  volume
-                    false,                   //no boolean operation
-                    0,                       //copy number
-                    checkOverlaps);          //overlaps checking
 
-  //     
-  // Shape 2
-  //
-  G4Material* shape2_mat = nist->FindOrBuildMaterial("G4_BONE_COMPACT_ICRU");
-  G4ThreeVector pos2 = G4ThreeVector(0, -1*cm, 7*cm);
 
-  // Trapezoid shape       
-  G4double shape2_dxa = 12*cm, shape2_dxb = 12*cm;
-  G4double shape2_dya = 10*cm, shape2_dyb = 16*cm;
-  G4double shape2_dz  = 6*cm;      
-  G4Trd* solidShape2 =    
-    new G4Trd("Shape2",                      //its name
-              0.5*shape2_dxa, 0.5*shape2_dxb, 
-              0.5*shape2_dya, 0.5*shape2_dyb, 0.5*shape2_dz); //its size
-                
-  G4LogicalVolume* logicShape2 =                         
-    new G4LogicalVolume(solidShape2,         //its solid
-                        shape2_mat,          //its material
-                        "Shape2");           //its name
-               
-  new G4PVPlacement(0,                       //no rotation
-                    pos2,                    //at position
-                    logicShape2,             //its logical volume
-                    "Shape2",                //its name
-                    logicEnv,                //its mother  volume
-                    false,                   //no boolean operation
-                    0,                       //copy number
-                    checkOverlaps);          //overlaps checking
-                
-  // Set Shape2 as scoring volume
-  //
-  fScoringVolume = logicShape2;
+  // Liquid Argom
 
-  //
-  //always return the physical World
-  //
+  G4double density = 1.390*g/cm3;
+  G4double z = 18., a = 39.95*g/mole;
+  G4Material* lAr_mat = new G4Material ("liquidArgon", z, a, density);
+  G4ThreeVector pos3 = G4ThreeVector(0, 0, 0);
+
+  // Conical section shape
+
+                    G4double lAr_rmina =  0.*cm, lAr_rmaxa = 1.*m;
+                    G4double lAr_rminb =  0.*cm, lAr_rmaxb = 1.*m;
+                    G4double lAr_hz = 1.*m;
+                    G4double lAr_phimin = 0.*deg, lAr_phimax = 360.*deg;
+                    G4Cons* solidlAr =
+                      new G4Cons("lAr",
+                      lAr_rmina, lAr_rmaxa, lAr_rminb, lAr_rmaxb, lAr_hz,
+                      lAr_phimin, lAr_phimax);
+
+                    G4LogicalVolume* logiclAr =
+                      new G4LogicalVolume(solidlAr,         //its solid
+                                          lAr_mat,          //its material
+                                          "lAr");           //its name
+
+                    new G4PVPlacement(0,                    //no rotation
+                                      pos3,                 //at position
+                                      logiclAr,             //its logical volume
+                                      "lAr",                //its name
+                                      logicsteelHousing,                //its mother  volume
+                                      false,                   //no boolean operation
+                                      0,                       //copy number
+                                      checkOverlaps);          //overlaps checking
+
+
+
+
   return physWorld;
 }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

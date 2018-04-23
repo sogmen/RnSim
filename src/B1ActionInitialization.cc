@@ -58,14 +58,15 @@ void B1ActionInitialization::BuildForMaster() const
 void B1ActionInitialization::Build() const
 {
   SetUserAction(new B1PrimaryGeneratorAction);
-
+  /*
   B1RunAction* runAction = new B1RunAction;
   SetUserAction(runAction);
-  
+
   B1EventAction* eventAction = new B1EventAction(runAction);
   SetUserAction(eventAction);
-  
+
   SetUserAction(new B1SteppingAction(eventAction));
-}  
+*/
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
